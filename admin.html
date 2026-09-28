@@ -1,0 +1,17 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Supervisor - Picking 400</title>
+<style>body{font-family:Arial;margin:16px;background:#f4f4f4}table{border-collapse:collapse;background:#fff;width:100%;margin-bottom:20px}td,th{padding:7px 10px;border-bottom:1px solid #ddd;text-align:left;font-size:14px}th{background:#000d4b;color:#fff}
+.bar{background:#ddd;height:14px;border-radius:7px;min-width:100px}.bar i{display:block;height:100%;background:#3860b2;border-radius:7px}
+.dot{display:inline-block;width:12px;height:12px;border-radius:50%;background:#808080;margin-right:6px}.En{background:#ffa500}.Ce{background:#080}
+a.b,button{background:#3860b2;color:#fff;padding:8px 14px;border:0;border-radius:4px;text-decoration:none;font-size:14px;cursor:pointer}button.s{padding:3px 8px;font-size:12px;background:#666}</style></head><body>
+<h2>Supervisor – Inventario Picking 400 <a class="b" href="/export.xlsx">⬇ Descargar Excel</a></h2>
+<table id="t"></table><h3>Últimos registros (en vivo)</h3><table id="r"></table>
+<script>
+const n=s=>parseInt(String(s).replace(/\D/g,''))||0;
+async function adm(p,e){if(confirm(p+' → '+e+'?'))fetch('/api',{method:'POST',body:JSON.stringify({t:'admin',pasillo:p,estado:e})})}
+new EventSource('/events').onmessage=e=>{const S=JSON.parse(e.data);
+const c={};S.registros.forEach(g=>{const k=String(g.Pasillo).toUpperCase();c[k]=(c[k]||0)+1});
+t.innerHTML='<tr><th>Pasillo</th><th>Estado</th><th>Operario</th><th>Avance</th><th>Inicio</th><th>Fin</th><th>Min</th><th></th></tr>'+[...S.tiempos].sort((a,b)=>n(a.Pasillo)-n(b.Pasillo)).map(x=>{
+const r=c[x.Pasillo.toUpperCase()]||0,tt=x['Total de Ubicaciones'],p=tt?Math.min(100,Math.round(r/tt*100)):0,m=x.Inicio&&x.Fin?Math.round((new Date(x.Fin)-new Date(x.Inicio))/60000):'';
+return `<tr><td>${x.Pasillo}</td><td><span class="dot ${x.Estado.slice(0,2)}"></span>${x.Estado}</td><td>${x.Operario||'-'}</td><td><div class="bar"><i style="width:${p}%"></i></div>${r}/${tt} (${p}%)</td><td>${(x.Inicio||'').slice(11)}</td><td>${(x.Fin||'').slice(11)}</td><td>${m}</td><td><button class="s" onclick="adm('${x.Pasillo}','Pendiente')">Liberar</button> <button class="s" onclick="adm('${x.Pasillo}','En Proceso')">Reabrir</button></td></tr>`}).join('');
+r.innerHTML='<tr><th>Hora</th><th>Operario</th><th>Pasillo</th><th>Ubicación</th><th>Código</th><th>Descripción</th><th>UMA</th><th>Total</th></tr>'+S.registros.slice(-40).reverse().map(g=>`<tr><td>${g.Title}</td><td>${g.Operario}</td><td>${g.Pasillo}</td><td>${g.Ubicacion}</td><td>${g.Codigo}</td><td>${g.Descripcion}</td><td>${g.UMA}</td><td>${g.Total}</td></tr>`).join('')}
+</script></body></html>
